@@ -1,166 +1,341 @@
-local RizenHub = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local CloseButton = Instance.new("TextButton")
-local MinimizeButton = Instance.new("TextButton")
-local MaximizeButton = Instance.new("TextButton")
-local ColorDropdown = Instance.new("Frame")
-local ColorButton = Instance.new("TextButton")
-local AutoSetSpawnPoint = Instance.new("TextButton")
-local SelectWeapon = Instance.new("TextButton")
-local AutoFarmLevel = Instance.new("TextButton")
-local AutoFarmNearest = Instance.new("TextButton")
-local AutoFarmChest = Instance.new("TextButton")
+-- Variáveis
+local isESPEnabled = false
+local isAutoBreathingEnabled = false
+local loadingComplete = false
+local screenSize = game:GetService("Workspace").CurrentCamera.ViewportSize
 
-local autoFarmChestActive = false
-local minimized = false
+-- Função para criar a interface de carregamento e opções
+local function createInterface()
+    -- Criar a tela de carregamento
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "KgHubInterface"
+    screenGui.Parent = game.Players.LocalPlayer.PlayerGui
 
-RizenHub.Name = "RizenHub"
-RizenHub.Parent = game.CoreGui
+    -- Fundo da tela
+    local background = Instance.new("Frame")
+    background.Size = UDim2.new(0, 500, 0, 300)
+    background.Position = UDim2.new(0.5, -250, 0.5, -150)
+    background.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    background.BackgroundTransparency = 0.9
+    background.Parent = screenGui
 
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = RizenHub
-MainFrame.BackgroundColor3 = Color3.new(0.2, 0, 0)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 300, 0, 300)
-MainFrame.Active = true
-MainFrame.Draggable = true
+    -- Título "KgHub"
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 50)
+    title.Position = UDim2.new(0, 0, 0, 10)
+    title.Text = "KgHub"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextScaled = true
+    title.BackgroundTransparency = 1
+    title.Parent = background
 
-Title.Name = "Title"
-Title.Parent = MainFrame
-Title.BackgroundColor3 = Color3.new(0.3, 0, 0)
-Title.Size = UDim2.new(0, 300, 0, 50)
-Title.Font = Enum.Font.SourceSans
-Title.Text = "Rizen Hub | Blox Fruits"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.TextSize = 24
+    -- Barra de carregamento
+    local loadingBarBackground = Instance.new("Frame")
+    loadingBarBackground.Size = UDim2.new(0, 400, 0, 20)
+    loadingBarBackground.Position = UDim2.new(0.5, -200, 0.5, 70)
+    loadingBarBackground.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    loadingBarBackground.Parent = background
 
-local function createButton(name, text, position, parent, size)
-    local button = Instance.new("TextButton")
-    button.Name = name
-    button.Parent = parent
-    button.BackgroundColor3 = Color3.new(0.4, 0, 0)
-    button.Position = position
-    button.Size = size or UDim2.new(0, 280, 0, 30)
-    button.Font = Enum.Font.SourceSans
-    button.Text = text
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.TextSize = 18
-    button.TextWrapped = true
-    return button
-end
+    local loadingBar = Instance.new("Frame")
+    loadingBar.Size = UDim2.new(0, 0, 1, 0)
+    loadingBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    loadingBar.Parent = loadingBarBackground
 
-local function toggleButtonState(button)
-    if button.BackgroundColor3 == Color3.new(0.4, 0, 0) then
-        button.BackgroundColor3 = Color3.new(0, 0.4, 0)
-        button.Text = button.Text .. " (Ativado)"
-    else
-        button.BackgroundColor3 = Color3.new(0.4, 0, 0)
-        button.Text = button.Text:gsub(" %(Ativado%)", "")
-    end
-end
+    -- Texto de status de carregamento
+    local loadingText = Instance.new("TextLabel")
+    loadingText.Size = UDim2.new(1, 0, 0, 50)
+    loadingText.Position = UDim2.new(0, 0, 0, 100)
+    loadingText.Text = "Carregando..."
+    loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    loadingText.TextScaled = true
+    loadingText.BackgroundTransparency = 1
+    loadingText.Parent = background
 
-local function setVisibility(visible)
-    for _, child in pairs(MainFrame:GetChildren()) do
-        if child ~= Title and child ~= MinimizeButton and child ~= CloseButton and child ~= MaximizeButton and child ~= ColorButton and child ~= ColorDropdown then
-            child.Visible = visible
-        end
-    end
-    ColorButton.Visible = visible
-end
+    -- Barra de progresso de carregamento
+    local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, 0)
+    local tween = game:GetService("TweenService"):Create(loadingBar, tweenInfo, {Size = UDim2.new(0, 400, 1, 0)})
+    tween:Play()
 
-local function changeInterfaceColor(color)
-    MainFrame.BackgroundColor3 = color
-    Title.BackgroundColor3 = color:lerp(Color3.new(0.3, 0, 0), 0.5)
-    for _, child in pairs(MainFrame:GetChildren()) do
-        if child:IsA("TextButton") and child.Name ~= "CloseButton" and child.Name ~= "MinimizeButton" and child.Name ~= "MaximizeButton" and child.Name ~= "ColorButton" then
-            child.BackgroundColor3 = color
-        end
-    end
-end
+    -- Quando o carregamento terminar, exibe as opções
+    tween.Completed:Connect(function()
+        loadingComplete = true
+        loadingText.Text = "Carregamento concluído!"
+        wait(1)
 
-CloseButton = createButton("CloseButton", "X", UDim2.new(0, 270, 0, 10), MainFrame, UDim2.new(0, 20, 0, 20))
-CloseButton.MouseButton1Click:Connect(function()
-    RizenHub:Destroy()
-end)
+        -- Esconder a tela de carregamento
+        background.Visible = false
 
-MinimizeButton = createButton("MinimizeButton", "-", UDim2.new(0, 240, 0, 10), MainFrame, UDim2.new(0, 20, 0, 20))
-MinimizeButton.MouseButton1Click:Connect(function()
-    if minimized then
-        MainFrame.Size = UDim2.new(0, 300, 0, 300)
-        setVisibility(true)
-        MinimizeButton.Text = "-"
-        minimized = false
-    else
-        MainFrame.Size = UDim2.new(0, 300, 0, 50)
-        setVisibility(false)
-        MinimizeButton.Text = "+"
-        minimized = true
-    end
-end)
+        -- Exibir as opções
+        local optionsFrame = Instance.new("Frame")
+        optionsFrame.Size = UDim2.new(0, 500, 0, 300)
+        optionsFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+        optionsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        optionsFrame.BackgroundTransparency = 0.9
+        optionsFrame.Parent = screenGui
 
-MaximizeButton = createButton("MaximizeButton", "⬜", UDim2.new(0, 210, 0, 10), MainFrame, UDim2.new(0, 20, 0, 20))
-MaximizeButton.MouseButton1Click:Connect(function()
-    if MainFrame.Size == UDim2.new(0, 300, 0, 300) then
-        MainFrame.Size = UDim2.new(1, -20, 1, -20)
-        MainFrame.Position = UDim2.new(0, 10, 0, 10)
-    else
-        MainFrame.Size = UDim2.new(0, 300, 0, 300)
-        MainFrame.Position = UDim2.new(0.5, -150, 0.5, -150)
-    end
-end)
+        -- Título "Opções"
+        local optionsTitle = Instance.new("TextLabel")
+        optionsTitle.Size = UDim2.new(1, 0, 0, 50)
+        optionsTitle.Position = UDim2.new(0, 0, 0, 10)
+        optionsTitle.Text = "Opções"
+        optionsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        optionsTitle.TextScaled = true
+        optionsTitle.BackgroundTransparency = 1
+        optionsTitle.Parent = optionsFrame
 
-ColorButton = createButton("ColorButton", "Select Color", UDim2.new(0, 10, 0, 260), MainFrame)
-ColorDropdown.Name = "ColorDropdown"
-ColorDropdown.Parent = MainFrame
-ColorDropdown.BackgroundColor3 = Color3.new(0.3, 0, 0)
-ColorDropdown.Position = UDim2.new(0, 10, 0, 290)
-ColorDropdown.Size = UDim2.new(0, 280, 0, 150)
-ColorDropdown.Visible = false
+        -- Texto de controle do ESP
+        local espLabel = Instance.new("TextLabel")
+        espLabel.Size = UDim2.new(1, 0, 0, 50)
+        espLabel.Position = UDim2.new(0, 0, 0, 70)
+        espLabel.Text = "ESP (F)"
+        espLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        espLabel.TextScaled = true
+        espLabel.BackgroundTransparency = 1
+        espLabel.Parent = optionsFrame
 
-local colors = {
-    ["Red"] = Color3.new(1, 0, 0),
-    ["Blue"] = Color3.new(0, 0, 1),
-    ["White"] = Color3.new(1, 1, 1),
-    ["Purple"] = Color3.new(0.5, 0, 0.5),
-    ["Black"] = Color3.new(0, 0, 0)
-}
-
-local colorIndex = 0
-for colorName, colorValue in pairs(colors) do
-    local button = createButton(colorName .. "Button", colorName, UDim2.new(0, 10, 0, colorIndex * 30), ColorDropdown, UDim2.new(0, 260, 0, 30))
-    button.MouseButton1Click:Connect(function()
-        changeInterfaceColor(colorValue)
-        ColorDropdown.Visible = false
+        -- Texto de controle do Auto Breathing
+        local breathingLabel = Instance.new("TextLabel")
+        breathingLabel.Size = UDim2.new(1, 0, 0, 50)
+        breathingLabel.Position = UDim2.new(0, 0, 0, 140)
+        breathingLabel.Text = "Auto Breathing (F4)"
+        breathingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        breathingLabel.TextScaled = true
+        breathingLabel.BackgroundTransparency = 1
+        breathingLabel.Parent = optionsFrame
     end)
-    colorIndex = colorIndex + 1
 end
 
-ColorButton.MouseButton1Click:Connect(function()
-    ColorDropdown.Visible = not ColorDropdown.Visible
+-- Função para simular pressionar a tecla G (Auto Breathing)
+local function pressG()
+    local UserInputService = game:GetService("UserInputService")
+    local inputObject = Instance.new("InputObject")
+    inputObject.KeyCode = Enum.KeyCode.G
+    inputObject.UserInputType = Enum.UserInputType.Keyboard
+    UserInputService.InputBegan:Fire(inputObject, false)
+end
+
+-- Função para criar o ESP para jogadores
+local function createPlayerESP(player)
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        -- Criar a parte do ESP
+        local espPart = Instance.new("Part")
+        espPart.Name = "BodyESP"
+        espPart.Size = Vector3.new(4, 6, 2)  -- Tamanho do quadrado
+        espPart.Position = character.HumanoidRootPart.Position
+        espPart.Anchored = true
+        espPart.CanCollide = false
+        espPart.Transparency = 0.5
+        espPart.BrickColor = BrickColor.Red()  -- Cor vermelha para jogadores
+        espPart.Parent = game.CoreGui
+
+        -- Atualizar a posição do ESP
+        game:GetService("RunService").Heartbeat:Connect(function()
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                espPart.Position = character.HumanoidRootPart.Position + Vector3.new(0, 5, 0)  -- Levanta o quadrado um pouco acima da cabeça
+            else
+                espPart:Destroy()  -- Remove o ESP se o personagem for destruído
+            end
+        end)
+
+        -- Exibir a vida e o nome do jogador
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Criar o BillboardGui para o nome e a vida
+            local healthLabel = Instance.new("BillboardGui")
+            healthLabel.Size = UDim2.new(0, 100, 0, 50)
+            healthLabel.StudsOffset = Vector3.new(0, 3, 0)
+            healthLabel.Adornee = character.Head
+            healthLabel.Parent = character.Head
+
+            local textLabel = Instance.new("TextLabel")
+            textLabel.Size = UDim2.new(1, 0, 1, 0)
+            textLabel.Text = player.Name .. "\nHP: " .. math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth)
+            textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)  -- Cor vermelha para jogadores
+            textLabel.BackgroundTransparency = 1  -- Sem fundo
+            textLabel.TextWrapped = true  -- Quebra o texto automaticamente
+            textLabel.Parent = healthLabel
+
+            humanoid.HealthChanged:Connect(function()
+                -- Atualiza a vida do jogador
+                if humanoid then
+                    textLabel.Text = player.Name .. "\nHP: " .. math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth)
+                end
+            end)
+        end
+    end
+end
+
+-- Função para alternar o ESP
+local function toggleESP()
+    isESPEnabled = not isESPEnabled
+    if isESPEnabled then
+        print("ESP Ativado")
+    else
+        print("ESP Desativado")
+    end
+end
+
+-- Função para alternar o Auto Breathing
+local function toggleAutoBreathing()
+    isAutoBreathingEnabled = not isAutoBreathingEnabled
+    if isAutoBreathingEnabled then
+        print("Auto Breathing Ativado")
+        pressG()  -- Simula o pressionamento da tecla G
+    else
+        print("Auto Breathing Desativado")
+    end
+end
+
+-- Função para alternar a ativação do ESP com a tecla F
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.F then
+        toggleESP()
+    elseif input.KeyCode == Enum.KeyCode.F4 then
+        toggleAutoBreathing()
+    end
 end)
 
-AutoSetSpawnPoint = createButton("AutoSetSpawnPoint", "Auto Set Spawn Point", UDim2.new(0, 10, 0, 60), MainFrame)
-AutoSetSpawnPoint.MouseButton1Click:Connect(function()
-    toggleButtonState(AutoSetSpawnPoint)
-    -- Adicione o código para Auto Set Spawn Point aqui
+-- Criar a interface e o ESP
+createInterface()
+
+-- Criar ESP para os jogadores no início
+for _, player in pairs(game.Players:GetPlayers()) do
+    if player ~= game.Players.LocalPlayer then
+        player.CharacterAdded:Connect(function()
+            if isESPEnabled then
+                createPlayerESP(player)
+            end
+        end)
+    end
+end
+
+-- Monitorar a adição de novos jogadores para criar o ESP para eles
+game.Players.PlayerAdded:Connect(function(player)
+    if player ~= game.Players.LocalPlayer then
+        player.CharacterAdded:Connect(function()
+            if isESPEnabled then
+                createPlayerESP(player)
+            end
+        end)
+    end
 end)
 
-SelectWeapon = createButton("SelectWeapon", "Select Weapon", UDim2.new(0, 10, 0, 100), MainFrame)
-SelectWeapon.MouseButton1Click:Connect(function()
-    -- Adicione o código para Select Weapon aqui
+-- Monitorar a remoção de jogadores
+game.Players.PlayerRemoving:Connect(function(player)
+    if player ~= game.Players.LocalPlayer then
+        local character = player.Character
+        if character and character:FindFirstChild("BodyESP") then
+            character.BodyESP:Destroy()  -- Remove o ESP do jogador
+        end
+    end
 end)
 
-AutoFarmLevel = createButton("AutoFarmLevel", "Auto Farm Level", UDim2.new(0, 10, 0, 140), MainFrame)
-AutoFarmLevel.MouseButton1Click:Connect(function()
-    toggleButtonState(AutoFarmLevel)
-    -- Adicione o código para Auto Farm Level aqui
+-- Monitorar a adição de NPCs para criar o ESP para eles
+workspace.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+        if isESPEnabled then
+            createNPCESP(child)
+        end
+    end
 end)
 
-AutoFarmNearest = createButton("AutoFarmNearest", "Auto Farm Nearest", UDim2.new(0, 10, 0, 180), MainFrame)
-AutoFarmNearest.MouseButton1Click:Connect(function()
-    toggleButtonState(AutoFarmNearest)
-    -- Adicione o código para Auto Farm Nearest aqui
+-- Monitorar a remoção de NPCs
+workspace.ChildRemoved:Connect(function(child)
+    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+        if child:FindFirstChild("BodyESP") then
+            child.BodyESP:Destroy()  -- Remove o ESP do NPC
+        end
+    end
 end)
 
-AutoFarmChest = createButton("AutoFarmChest", "Auto Farm Chest (Tween
+-- Função para criar o ESP para NPCs
+local function createNPCESP(npc)
+    if npc and npc:FindFirstChild("HumanoidRootPart") then
+        -- Criar a parte do ESP para NPC
+        local espPart = Instance.new("Part")
+        espPart.Name = "BodyESP"
+        espPart.Size = Vector3.new(4, 6, 2)  -- Tamanho do quadrado
+        espPart.Position = npc.HumanoidRootPart.Position
+        espPart.Anchored = true
+        espPart.CanCollide = false
+        espPart.Transparency = 0.5
+        espPart.BrickColor = BrickColor.Blue()  -- Cor azul para NPCs
+        espPart.Parent = game.CoreGui
+
+        -- Atualizar a posição do ESP
+        game:GetService("RunService").Heartbeat:Connect(function()
+            if npc and npc:FindFirstChild("HumanoidRootPart") then
+                espPart.Position = npc.HumanoidRootPart.Position + Vector3.new(0, 5, 0)  -- Levanta o quadrado um pouco acima da cabeça
+            else
+                espPart:Destroy()  -- Remove o ESP se o NPC for destruído
+            end
+        end)
+
+        -- Exibir a vida e o nome do NPC
+        local humanoid = npc:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Criar o BillboardGui para o nome e a vida
+            local healthLabel = Instance.new("BillboardGui")
+            healthLabel.Size = UDim2.new(0, 100, 0, 50)
+            healthLabel.StudsOffset = Vector3.new(0, 3, 0)
+            healthLabel.Adornee = npc.Head
+            healthLabel.Parent = npc.Head
+
+            local textLabel = Instance.new("TextLabel")
+            textLabel.Size = UDim2.new(1, 0, 1, 0)
+            textLabel.Text = npc.Name .. "\nHP: " .. math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth)
+            textLabel.TextColor3 = Color3.fromRGB(0, 0, 255)  -- Cor azul para NPCs
+            textLabel.BackgroundTransparency = 1  -- Sem fundo
+            textLabel.TextWrapped = true  -- Quebra o texto automaticamente
+            textLabel.Parent = healthLabel
+
+            humanoid.HealthChanged:Connect(function()
+                -- Atualiza a vida do NPC
+                if humanoid then
+                    textLabel.Text = npc.Name .. "\nHP: " .. math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth)
+                end
+            end)
+        end
+    end
+end
+
+-- Função para garantir que o ESP funcione para todos os NPCs ao iniciar
+for _, npc in pairs(workspace:GetChildren()) do
+    if npc:IsA("Model") and npc:FindFirstChild("Humanoid") then
+        if isESPEnabled then
+            createNPCESP(npc)
+        end
+    end
+end
+
+-- Função para garantir que o Auto Breathing funcione
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.F4 then
+        toggleAutoBreathing()  -- Alterna o Auto Breathing
+    end
+end)
+
+-- Monitorar a adição de NPCs no workspace e criar o ESP para novos NPCs
+workspace.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+        if isESPEnabled then
+            createNPCESP(child)
+        end
+    end
+end)
+
+-- Ajuste de comportamento para ESP ao iniciar e durante o jogo
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    if player ~= game.Players.LocalPlayer then
+        player.CharacterAdded:Connect(function()
+            if isESPEnabled then
+                createPlayerESP(player)
+            end
+        end)
+    end
+end)
