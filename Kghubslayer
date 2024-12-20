@@ -1,124 +1,10 @@
--- Variáveis
-local isESPEnabled = false
-local isAutoBreathingEnabled = false
-local loadingComplete = false
-local screenSize = game:GetService("Workspace").CurrentCamera.ViewportSize
-
--- Função para criar a interface de carregamento e opções
-local function createInterface()
-    -- Criar a tela de carregamento
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "KgHubInterface"
-    screenGui.Parent = game.Players.LocalPlayer.PlayerGui
-
-    -- Fundo da tela
-    local background = Instance.new("Frame")
-    background.Size = UDim2.new(0, 500, 0, 300)
-    background.Position = UDim2.new(0.5, -250, 0.5, -150)
-    background.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    background.BackgroundTransparency = 0.9
-    background.Parent = screenGui
-
-    -- Título "KgHub"
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 50)
-    title.Position = UDim2.new(0, 0, 0, 10)
-    title.Text = "KgHub"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextScaled = true
-    title.BackgroundTransparency = 1
-    title.Parent = background
-
-    -- Barra de carregamento
-    local loadingBarBackground = Instance.new("Frame")
-    loadingBarBackground.Size = UDim2.new(0, 400, 0, 20)
-    loadingBarBackground.Position = UDim2.new(0.5, -200, 0.5, 70)
-    loadingBarBackground.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    loadingBarBackground.Parent = background
-
-    local loadingBar = Instance.new("Frame")
-    loadingBar.Size = UDim2.new(0, 0, 1, 0)
-    loadingBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    loadingBar.Parent = loadingBarBackground
-
-    -- Texto de status de carregamento
-    local loadingText = Instance.new("TextLabel")
-    loadingText.Size = UDim2.new(1, 0, 0, 50)
-    loadingText.Position = UDim2.new(0, 0, 0, 100)
-    loadingText.Text = "Carregando..."
-    loadingText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    loadingText.TextScaled = true
-    loadingText.BackgroundTransparency = 1
-    loadingText.Parent = background
-
-    -- Barra de progresso de carregamento
-    local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, 0)
-    local tween = game:GetService("TweenService"):Create(loadingBar, tweenInfo, {Size = UDim2.new(0, 400, 1, 0)})
-    tween:Play()
-
-    -- Quando o carregamento terminar, exibe as opções
-    tween.Completed:Connect(function()
-        loadingComplete = true
-        loadingText.Text = "Carregamento concluído!"
-        wait(1)
-
-        -- Esconder a tela de carregamento
-        background.Visible = false
-
-        -- Exibir as opções
-        local optionsFrame = Instance.new("Frame")
-        optionsFrame.Size = UDim2.new(0, 500, 0, 300)
-        optionsFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
-        optionsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        optionsFrame.BackgroundTransparency = 0.9
-        optionsFrame.Parent = screenGui
-
-        -- Título "Opções"
-        local optionsTitle = Instance.new("TextLabel")
-        optionsTitle.Size = UDim2.new(1, 0, 0, 50)
-        optionsTitle.Position = UDim2.new(0, 0, 0, 10)
-        optionsTitle.Text = "Opções"
-        optionsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-        optionsTitle.TextScaled = true
-        optionsTitle.BackgroundTransparency = 1
-        optionsTitle.Parent = optionsFrame
-
-        -- Texto de controle do ESP
-        local espLabel = Instance.new("TextLabel")
-        espLabel.Size = UDim2.new(1, 0, 0, 50)
-        espLabel.Position = UDim2.new(0, 0, 0, 70)
-        espLabel.Text = "ESP (F)"
-        espLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        espLabel.TextScaled = true
-        espLabel.BackgroundTransparency = 1
-        espLabel.Parent = optionsFrame
-
-        -- Texto de controle do Auto Breathing
-        local breathingLabel = Instance.new("TextLabel")
-        breathingLabel.Size = UDim2.new(1, 0, 0, 50)
-        breathingLabel.Position = UDim2.new(0, 0, 0, 140)
-        breathingLabel.Text = "Auto Breathing (F4)"
-        breathingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        breathingLabel.TextScaled = true
-        breathingLabel.BackgroundTransparency = 1
-        breathingLabel.Parent = optionsFrame
-    end)
-end
-
--- Função para simular pressionar a tecla G (Auto Breathing)
-local function pressG()
-    local UserInputService = game:GetService("UserInputService")
-    local inputObject = Instance.new("InputObject")
-    inputObject.KeyCode = Enum.KeyCode.G
-    inputObject.UserInputType = Enum.UserInputType.Keyboard
-    UserInputService.InputBegan:Fire(inputObject, false)
-end
+local isESPEnabled = false  -- Flag para controlar se o ESP está ativado ou desativado
 
 -- Função para criar o ESP para jogadores
 local function createPlayerESP(player)
     local character = player.Character
     if character and character:FindFirstChild("HumanoidRootPart") then
-        -- Criar a parte do ESP
+        -- Criar uma parte para contornar o personagem
         local espPart = Instance.new("Part")
         espPart.Name = "BodyESP"
         espPart.Size = Vector3.new(4, 6, 2)  -- Tamanho do quadrado
@@ -166,95 +52,10 @@ local function createPlayerESP(player)
     end
 end
 
--- Função para alternar o ESP
-local function toggleESP()
-    isESPEnabled = not isESPEnabled
-    if isESPEnabled then
-        print("ESP Ativado")
-    else
-        print("ESP Desativado")
-    end
-end
-
--- Função para alternar o Auto Breathing
-local function toggleAutoBreathing()
-    isAutoBreathingEnabled = not isAutoBreathingEnabled
-    if isAutoBreathingEnabled then
-        print("Auto Breathing Ativado")
-        pressG()  -- Simula o pressionamento da tecla G
-    else
-        print("Auto Breathing Desativado")
-    end
-end
-
--- Função para alternar a ativação do ESP com a tecla F
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    if input.KeyCode == Enum.KeyCode.F then
-        toggleESP()
-    elseif input.KeyCode == Enum.KeyCode.F4 then
-        toggleAutoBreathing()
-    end
-end)
-
--- Criar a interface e o ESP
-createInterface()
-
--- Criar ESP para os jogadores no início
-for _, player in pairs(game.Players:GetPlayers()) do
-    if player ~= game.Players.LocalPlayer then
-        player.CharacterAdded:Connect(function()
-            if isESPEnabled then
-                createPlayerESP(player)
-            end
-        end)
-    end
-end
-
--- Monitorar a adição de novos jogadores para criar o ESP para eles
-game.Players.PlayerAdded:Connect(function(player)
-    if player ~= game.Players.LocalPlayer then
-        player.CharacterAdded:Connect(function()
-            if isESPEnabled then
-                createPlayerESP(player)
-            end
-        end)
-    end
-end)
-
--- Monitorar a remoção de jogadores
-game.Players.PlayerRemoving:Connect(function(player)
-    if player ~= game.Players.LocalPlayer then
-        local character = player.Character
-        if character and character:FindFirstChild("BodyESP") then
-            character.BodyESP:Destroy()  -- Remove o ESP do jogador
-        end
-    end
-end)
-
--- Monitorar a adição de NPCs para criar o ESP para eles
-workspace.ChildAdded:Connect(function(child)
-    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
-        if isESPEnabled then
-            createNPCESP(child)
-        end
-    end
-end)
-
--- Monitorar a remoção de NPCs
-workspace.ChildRemoved:Connect(function(child)
-    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
-        if child:FindFirstChild("BodyESP") then
-            child.BodyESP:Destroy()  -- Remove o ESP do NPC
-        end
-    end
-end)
-
--- Função para criar o ESP para NPCs
+-- Função para criar o ESP para NPCs (mobs) e mostrar a vida e nome
 local function createNPCESP(npc)
     if npc and npc:FindFirstChild("HumanoidRootPart") then
-        -- Criar a parte do ESP para NPC
+        -- Criar uma parte para contornar o NPC
         local espPart = Instance.new("Part")
         espPart.Name = "BodyESP"
         espPart.Size = Vector3.new(4, 6, 2)  -- Tamanho do quadrado
@@ -302,35 +103,130 @@ local function createNPCESP(npc)
     end
 end
 
--- Função para garantir que o ESP funcione para todos os NPCs ao iniciar
-for _, npc in pairs(workspace:GetChildren()) do
-    if npc:IsA("Model") and npc:FindFirstChild("Humanoid") then
-        if isESPEnabled then
-            createNPCESP(npc)
+-- Função para alternar a ativação do ESP com a tecla F
+local function toggleESP()
+    isESPEnabled = not isESPEnabled  -- Alterna o estado do ESP
+
+    -- Atualizar o ESP para todos os jogadores
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            local character = player.Character
+            if character then
+                if isESPEnabled then
+                    -- Se o ESP estiver ativado, crie o ESP para o jogador
+                    createPlayerESP(player)
+                else
+                    -- Se o ESP estiver desativado, remova o ESP
+                    if character:FindFirstChild("HumanoidRootPart") then
+                        for _, v in pairs(character:GetChildren()) do
+                            if v:IsA("Part") and v.Name == "BodyESP" then
+                                v:Destroy()
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
+
+    -- Atualizar o ESP para todos os NPCs
+    for _, npc in pairs(workspace:GetChildren()) do
+        if npc:IsA("Model") and npc:FindFirstChild("Humanoid") then
+            if isESPEnabled then
+                -- Se o ESP estiver ativado, crie o ESP para o NPC
+                createNPCESP(npc)
+            else
+                -- Se o ESP estiver desativado, remova o ESP
+                if npc:FindFirstChild("BodyESP") then
+                    npc.BodyESP:Destroy()
+                end
+            end
+        end
+    end
+
+    -- Exibir a mensagem de status
+    local message = isESPEnabled and "ESP Ativado" or "ESP Desativado"
+    local msgLabel = Instance.new("TextLabel")
+    msgLabel.Size = UDim2.new(0, 200, 0, 50)
+    msgLabel.Position = UDim2.new(0.5, -100, 0, 50)
+    msgLabel.Text = message
+    msgLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    msgLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    msgLabel.BackgroundTransparency = 0.5
+    msgLabel.Parent = game.CoreGui
+    wait(2)
+    msgLabel:Destroy()
 end
 
--- Função para garantir que o Auto Breathing funcione
+-- Interface de Carregamento
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "KgHub"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tela de Carregamento
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(0, 400, 0, 200)
+loadingFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+loadingFrame.BackgroundTransparency = 0.5
+loadingFrame.Parent = screenGui
+
+local loadingLabel = Instance.new("TextLabel")
+loadingLabel.Size = UDim2.new(1, 0, 0, 50)
+loadingLabel.Position = UDim2.new(0, 0, 0.25, 0)
+loadingLabel.Text = "Carregando..."
+loadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+loadingLabel.TextScaled = true
+loadingLabel.BackgroundTransparency = 1
+loadingLabel.Parent = loadingFrame
+
+local loadingBar = Instance.new("Frame")
+loadingBar.Size = UDim2.new(0, 0, 0, 20)
+loadingBar.Position = UDim2.new(0, 0, 0.5, 0)
+loadingBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+loadingBar.Parent = loadingFrame
+
+local loadingTween = game:GetService("TweenService"):Create(loadingBar, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 20)})
+loadingTween:Play()
+loadingTween.Completed:Connect(function()
+    loadingFrame:Destroy()
+end)
+
+-- Tela de opções
+local optionsFrame = Instance.new("Frame")
+optionsFrame.Size = UDim2.new(0, 400, 0, 200)
+optionsFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+optionsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+optionsFrame.BackgroundTransparency = 0.5
+optionsFrame.Parent = screenGui
+
+local optionsLabel = Instance.new("TextLabel")
+optionsLabel.Size = UDim2.new(1, 0, 0, 50)
+optionsLabel.Position = UDim2.new(0, 0, 0.25, 0)
+optionsLabel.Text = "KgHub"
+optionsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+optionsLabel.TextScaled = true
+optionsLabel.BackgroundTransparency = 1
+optionsLabel.Parent = optionsFrame
+
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(0, 200, 0, 50)
+espButton.Position = UDim2.new(0, 0, 0.5, 0)
+espButton.Text = "ESP (F)"
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+espButton.BackgroundTransparency = 0.5
+espButton.Parent = optionsFrame
+
+-- Ativar/Desativar ESP com a tecla F
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    if input.KeyCode == Enum.KeyCode.F4 then
-        toggleAutoBreathing()  -- Alterna o Auto Breathing
+    if input.KeyCode == Enum.KeyCode.F and not gameProcessed then
+        toggleESP()
     end
 end)
 
--- Monitorar a adição de NPCs no workspace e criar o ESP para novos NPCs
-workspace.ChildAdded:Connect(function(child)
-    if child:IsA("Model") and child:FindFirstChild("Humanoid") then
-        if isESPEnabled then
-            createNPCESP(child)
-        end
-    end
-end)
-
--- Ajuste de comportamento para ESP ao iniciar e durante o jogo
-game:GetService("Players").PlayerAdded:Connect(function(player)
+-- Criar ESP para os jogadores no início
+for _, player in pairs(game.Players:GetPlayers()) do
     if player ~= game.Players.LocalPlayer then
         player.CharacterAdded:Connect(function()
             if isESPEnabled then
@@ -338,4 +234,5 @@ game:GetService("Players").PlayerAdded:Connect(function(player)
             end
         end)
     end
-end)
+end
+
